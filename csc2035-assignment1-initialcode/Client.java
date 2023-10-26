@@ -149,7 +149,6 @@ public class Client {
 		DatagramPacket sentPacket = new DatagramPacket(data, data.length, IPAddress, portNumber);
 		socket = new DatagramSocket();
 		socket.send(sentPacket);
-		System.out.println(metadata);
 		System.out.println("Metadata is sent");
 	}
 
@@ -170,7 +169,6 @@ public class Client {
 			}
 			segments.add(segment);
 		}
-		System.out.println(segments);
 		int sq = 0;
 		for (int i =0; i < segments.size();i++) {
 			String stringData = new String(segments.get(i));
@@ -199,19 +197,18 @@ public class Client {
 			Segment SegAck = null;
 			try {
 				SegAck = (Segment) is.readObject();
+				System.out.println("CLIENT: Sending segment: size "+ fileSeg.getSize() +", checksum "+ fileSeg.getChecksum()+", content ("+fileSeg.getPayLoad()+")" );
+				System.out.println("CLIENT: Waiting for an ACK: ");
+				System.out.println(String.format("CLIENT: Received ack with sq: %d", SegAck.getSq()));
+				System.out.println("------------------------------------------------");
+				System.out.println("------------------------------------------------");
 
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
 			}
-			System.out.println("Acknowledgement received: " + SegAck.getSq());
 		}
 
 	}
-
-
-
-
-
 
 
 	/* TODO: This function is essentially the same as the sendFileNormal function
@@ -232,7 +229,6 @@ public class Client {
 			}
 			segments.add(segment);
 		}
-		System.out.println(segments);
 		int sq = 0;
 		int errorNum = 0;
 
@@ -245,7 +241,6 @@ public class Client {
 			fileSeg.setType(SegmentType.Data);
 			fileSeg.setPayLoad(stringData);
 			fileSeg.setChecksum(checksum(stringData, isCorrupted(loss)));
-			sq = 1 - sq;
 
 			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 			ObjectOutputStream os = new ObjectOutputStream(outputStream);
@@ -267,14 +262,22 @@ public class Client {
 					try {
 						SegAck = (Segment) is.readObject();
 						errorNum = 0;
+						sq = sq == 0 ? 1 : 0;
+						System.out.println("CLIENT: Sending segment: size "+ fileSeg.getSize() +", checksum "+ fileSeg.getChecksum()+", content ("+fileSeg.getPayLoad()+")" );
+						System.out.println("CLIENT: Waiting for an ACK: ");
+						System.out.println(String.format("CLIENT: Received ack with sq: %d", SegAck.getSq()));
+						System.out.println("------------------------------------------------");
+						System.out.println("------------------------------------------------");
 						break;
 
 					} catch (ClassNotFoundException e) {
 						e.printStackTrace();
 					}
-					System.out.println("Acknowledgement received: " + SegAck.getSq());
-
 				} catch(Exception SocketTimeoutException){
+					System.out.println("CLIENT: Waiting for an ACK: ");
+					System.out.println("CLIENT: ACK not received");
+					System.out.println("------------------------------------------------");
+					System.out.println("------------------------------------------------");
 					i--;
 					errorNum++;
 					System.out.println(errorNum	);
